@@ -58,25 +58,34 @@ cd $STATICLIBSSL
 # build nginx, with various modules included/excluded
 echo "Configure & Building Nginx..."
 cd $BPATH/$VERSION_NGINX
-NGINX_LOG_DIR=/var/log/nginx
-NGINX_CACHE_DIR=/var/cache/nginx
+export NGX_LOG_DIR=/var/log/nginx
+export NGX_RUN_DIR=/var/log/nginx
+export NGX_CACHE_DIR=/var/cache/nginx
+
+CC_OPT="-O2 -static"
+LD_OPT="-static"
+
+if [ "$CC" != "clang" ]; then
+    CC_OPT="$CC_OPT -static-libgcc"
+fi
 
 ./configure --with-openssl=$STATICLIBSSL \
-            --with-cc-opt="-static -static-libgcc" \
-            --with-ld-opt="-static -lrt" \
-            --with-cpu-opt=generic \
+            --with-cc-opt="$CC_OPT" \
+            --with-ld-opt="$LD_OPT" \
             --prefix=/etc/nginx \
             --sbin-path=/usr/sbin/nginx \
             --conf-path=/etc/nginx/nginx.conf \
-            --error-log-path=$NGINX_LOG_DIR/error.log \
-            --http-log-path=$NGINX_LOG_DIR/access.log \
-            --pid-path=/run/nginx.pid \
-            --lock-path=/var/run/nginx.lock \
-            --http-client-body-temp-path=/var/cache/nginx/client_temp \
-            --http-proxy-temp-path=/var/cache/nginx/proxy_temp \
+            --error-log-path=$NGX_LOG_DIR/error.log \
+            --http-log-path=$NGX_LOG_DIR/access.log \
+            --pid-path=$NGX_RUN_DIR/nginx.pid \
+            --lock-path=$NGX_RUN_DIR/nginx.lock \
+            --http-client-body-temp-path=$NGX_CACHE_DIR/client_temp \
+            --http-proxy-temp-path=$NGX_CACHE_DIR/proxy_temp \
             --http-fastcgi-temp-path=$NGINX_CACHE_DIR/fastcgi_temp \
             --http-uwsgi-temp-path=$NGINX_CACHE_DIR/uwsgi_temp \
             --http-scgi-temp-path=$NGINX_CACHE_DIR/scgi_temp \
+            --user=nobody \
+            --group=nobody \
             --without-mail_pop3_module \
             --without-mail_smtp_module \
             --without-mail_imap_module \
@@ -97,7 +106,10 @@ touch $STATICLIBSSL/.openssl/include/openssl/ssl.h
 echo "compiling static nginx file..."
 make -s -j $(nproc)
 
-mv objs/nginx $HOME
+cd objs
+./nginx -v
+tar zcf $HOME/nginx.tar.gz nginx
+
 echo "Run following command if you need run nginx in another PC:"
 echo
-echo "    mkdir -p $NGINX_LOG_DIR $NGINX_CACHE_DIR"
+echo "    mkdir -p $NGX_LOG_DIR $NGX_CACHE_DIR"
