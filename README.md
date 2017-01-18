@@ -3,7 +3,8 @@
 A static nginx binary build script running on Ubuntu/Debian.
 
 ```bash
-./build_nginx.sh
+./build.sh
+mkdir -p $NGINX_LOG_DIR $NGINX_CACHE_DIR
 ```
 
 # Compile with

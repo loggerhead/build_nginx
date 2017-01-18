@@ -1,23 +1,35 @@
-os: linux
+language: c
 sudo: required
-
+compiler:
+  - clang
 env:
-  - export CC="gcc-4.8"
+  - CC="clang"
 
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - g++-4.8
     - gcc-4.8
+    - g++-4.8
+    - clang
 
-before_install:
+before_script:
   - sudo apt-get -y -qq update
   - sudo apt-get -y -qq install build-essential libxslt-dev zlib1g-dev aria2
 
-install:
-  - ./build.sh
-
 script:
-  - ./nginx -v
+  - ./build.sh
+  - rm -rf build/
+  - mv $HOME/nginx.tar.gz /tmp
+
+deploy:
+  provider: releases
+  api_key:
+    secure: ICl2WEn3Y3IKeNZeXKfP5iQsSA0U0Fp2hrJTOEpSbQLaYyR9pBudSO+eKChQeAqeI/vxKmY17GibbzJEgYMHJnwq2+5UBu9m2U599TYJFTE9kta0gBHzt51GHuvrIxmFSNP/xAkK1RCBElwtXV8xN5Oiea+ExvngmgBqJdRpfKjwSkl//kLnrsQvkcjXh0tfvzNFDeDEvprr89SsOnolWPHahV8gfzAYSKI7gbl/d16LKEHXdbRg3nk6Q9eFzw5ahIxtavCrAIA+9BsUqdFFIcSy6lOhRsi2U2ZzrbvD5HSZfKStlT74BnM7nmrXrz/EcgeUwp2HhVQm38K+Vnznnl0G9Vq6SNmWJZ8/MNdjtei3PXBzkQy/W6n0JxtFyjO3FU85uF6wBjvTmul87/E59VrYpVuKw3H/bGz0pJ8T3EZ3WtU0JD9l2kS7+O4rzxl+cgd4KZ+GNBuBT0yYeptmg2o/YiJQmnAfWSeU1jyvR0JBE7wXZIT49EOKFF0jOThQRE5oNjHn62TCn85AFhGtdAHX4+CMmrIli9pm/xH9bEYqJbMP96zhh6C1rHDB78WtBhT7+fNhhDFj5NHN8spUQjFwgbLDjPChwg3rBIknxRxW4q61tbA4UCtgij1FT4bzy40mZW1pnyWMyAzBScv4vMNreryvrea99Eswssnd8Q4=
+  file: /tmp/nginx.tar.gz
+  on:
+    repo: loggerhead/build_nginx
+
+notifications:
+  email: false

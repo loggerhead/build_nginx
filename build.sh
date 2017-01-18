@@ -58,12 +58,19 @@ cd $STATICLIBSSL
 # build nginx, with various modules included/excluded
 echo "Configure & Building Nginx..."
 cd $BPATH/$VERSION_NGINX
-NGINX_LOG_DIR=/var/log/nginx
-NGINX_CACHE_DIR=/var/cache/nginx
+export NGINX_LOG_DIR=/var/log/nginx
+export NGINX_CACHE_DIR=/var/cache/nginx
+
+CC_OPT="-O2 -static"
+LD_OPT="-static"
+
+if [ "$CC" != "clang" ]; then
+    CC_OPT="$CC_OPT -static-libgcc"
+fi
 
 ./configure --with-openssl=$STATICLIBSSL \
-            --with-cc-opt="-static -static-libgcc" \
-            --with-ld-opt="-static -lrt" \
+            --with-cc-opt="$CC_OPT" \
+            --with-ld-opt="$LD_OPT" \
             --with-cpu-opt=generic \
             --prefix=/etc/nginx \
             --sbin-path=/usr/sbin/nginx \
@@ -97,7 +104,9 @@ touch $STATICLIBSSL/.openssl/include/openssl/ssl.h
 echo "compiling static nginx file..."
 make -s -j $(nproc)
 
-mv objs/nginx $HOME
+objs/nginx -v
+tar zcf $HOME/nginx.tar.gz objs/nginx
+
 echo "Run following command if you need run nginx in another PC:"
 echo
 echo "    mkdir -p $NGINX_LOG_DIR $NGINX_CACHE_DIR"
